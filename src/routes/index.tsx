@@ -28,6 +28,95 @@ const GEOS = ["Вся Россия", "Города 1млн+", "Москва и �
 const FREQ = ["Минимум 1 раз в месяц", "Минимум 1 раз в неделю", "Раз в полгода"];
 const TABS = ["Параметры опроса", "Продукт и конкуренты", "Дополнительно"];
 
+function SplitSlider({
+  value,
+  onChange,
+  min = 10,
+  max = 90,
+  step = 5,
+  leftLabel,
+  rightLabel,
+  leftSublabel,
+  rightSublabel,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  leftLabel: string;
+  rightLabel: string;
+  leftSublabel?: string;
+  rightSublabel?: string;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState(false);
+
+  const updateFromClientX = (clientX: number) => {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const raw = ((clientX - rect.left) / rect.width) * 100;
+    const clamped = Math.min(Math.max(raw, min), max);
+    const stepped = Math.round(clamped / step) * step;
+    if (stepped !== value) onChange(stepped);
+  };
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: PointerEvent) => updateFromClientX(e.clientX);
+    const onUp = () => setDragging(false);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [dragging, value, min, max, step, onChange]);
+
+  return (
+    <div className="space-y-4">
+      <div
+        ref={trackRef}
+        className="relative flex h-14 w-full overflow-hidden rounded-xl ring-1 ring-border select-none"
+      >
+        <div
+          className="flex flex-col items-center justify-center border-r border-border bg-accent/10 transition-[flex] duration-150 ease-out"
+          style={{ flex: value }}
+        >
+          <span className="text-[10px] font-bold uppercase text-accent">{leftLabel}</span>
+          {leftSublabel && <span className="font-mono text-xs">{leftSublabel}</span>}
+        </div>
+        <div
+          className="flex flex-col items-center justify-center bg-card transition-[flex] duration-150 ease-out"
+          style={{ flex: 100 - value }}
+        >
+          <span className="text-[10px] font-bold uppercase text-muted">{rightLabel}</span>
+          {rightSublabel && <span className="font-mono text-xs">{rightSublabel}</span>}
+        </div>
+
+        <button
+          type="button"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            setDragging(true);
+            updateFromClientX(e.clientX);
+          }}
+          className="absolute top-0 bottom-0 z-10 -ml-3 w-6 cursor-ew-resize rounded-full bg-card py-1 shadow-md ring-1 ring-border transition-transform hover:scale-110 active:scale-95"
+          style={{ left: `${value}%` }}
+          aria-label="Изменить соотношение"
+        >
+          <div className="mx-auto h-full w-0.5 rounded-full bg-border" />
+        </button>
+      </div>
+      <div className="flex justify-between px-1 text-[11px] font-medium text-muted">
+        <span>{value}%</span>
+        <span>{100 - value}%</span>
+      </div>
+    </div>
+  );
+}
+
+
 function Index() {
   const [tab, setTab] = useState(0);
 
