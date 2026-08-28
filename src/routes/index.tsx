@@ -50,7 +50,7 @@ function SplitSlider({
   rightSublabel?: string;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState(false);
+  const draggingRef = useRef(false);
 
   const updateFromClientX = (clientX: number) => {
     const rect = trackRef.current?.getBoundingClientRect();
@@ -61,23 +61,45 @@ function SplitSlider({
     if (stepped !== value) onChange(stepped);
   };
 
+  const startDrag = (clientX: number) => {
+    draggingRef.current = true;
+    updateFromClientX(clientX);
+  };
+
   useEffect(() => {
-    if (!dragging) return;
-    const onMove = (e: PointerEvent) => updateFromClientX(e.clientX);
-    const onUp = () => setDragging(false);
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
+    const onMove = (e: MouseEvent) => {
+      if (!draggingRef.current) return;
+      e.preventDefault();
+      updateFromClientX(e.clientX);
     };
-  }, [dragging, value, min, max, step, onChange]);
+    const onUp = () => {
+      draggingRef.current = false;
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("mouseleave", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("mouseleave", onUp);
+    };
+  }, [value, min, max, step, onChange]);
 
   return (
     <div className="space-y-4">
       <div
         ref={trackRef}
-        className="relative flex h-14 w-full overflow-hidden rounded-xl ring-1 ring-border select-none"
+        className="relative flex h-14 w-full cursor-pointer overflow-hidden rounded-xl ring-1 ring-border select-none"
+        onMouseDown={(e) => startDrag(e.clientX)}
+        onTouchStart={(e) => startDrag(e.touches[0].clientX)}
+        onTouchMove={(e) => {
+          if (!draggingRef.current) return;
+          e.preventDefault();
+          updateFromClientX(e.touches[0].clientX);
+        }}
+        onTouchEnd={() => {
+          draggingRef.current = false;
+        }}
       >
         <div
           className="flex flex-col items-center justify-center border-r border-border bg-accent/10 transition-[flex] duration-150 ease-out"
@@ -94,19 +116,12 @@ function SplitSlider({
           {rightSublabel && <span className="font-mono text-xs">{rightSublabel}</span>}
         </div>
 
-        <button
-          type="button"
-          onPointerDown={(e) => {
-            e.preventDefault();
-            setDragging(true);
-            updateFromClientX(e.clientX);
-          }}
-          className="absolute top-0 bottom-0 z-10 -ml-3 w-6 cursor-ew-resize rounded-full bg-card py-1 shadow-md ring-1 ring-border transition-transform hover:scale-110 active:scale-95"
+        <div
+          className="pointer-events-none absolute top-1 bottom-1 z-10 -ml-3 w-6 rounded-full bg-card shadow-md ring-1 ring-border transition-transform"
           style={{ left: `${value}%` }}
-          aria-label="Изменить соотношение"
         >
-          <div className="mx-auto h-full w-0.5 rounded-full bg-border" />
-        </button>
+          <div className="mx-auto mt-2 h-8 w-0.5 rounded-full bg-border" />
+        </div>
       </div>
       <div className="flex justify-between px-1 text-[11px] font-medium text-muted">
         <span>{value}%</span>
@@ -115,6 +130,7 @@ function SplitSlider({
     </div>
   );
 }
+
 
 
 function Index() {
