@@ -85,18 +85,8 @@ function SplitSlider({
     };
   }, [value, min, max, step, onChange]);
 
-
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    window.addEventListener("mouseleave", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-      window.removeEventListener("mouseleave", onUp);
-    };
-  }, [value, min, max, step, onChange]);
-
   return (
+
     <div className="space-y-4">
       <div
         ref={trackRef}
