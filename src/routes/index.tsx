@@ -290,8 +290,8 @@ function Index() {
                     </div>
 
                     <div className="grid gap-12 md:grid-cols-2">
-                      <div className="space-y-4">
-                        <div className="flex items-end justify-between">
+                      <div>
+                        <div className="mb-4 flex items-end justify-between">
                           <label className="text-sm font-semibold">Пол</label>
                           <button
                             onClick={() => setGender(50)}
@@ -300,40 +300,16 @@ function Index() {
                             Сбросить
                           </button>
                         </div>
-                        <div className="flex h-12 w-full overflow-hidden rounded-xl ring-1 ring-border">
-                          <div
-                            className="flex flex-col items-center justify-center border-r border-border bg-accent/10 transition-all"
-                            style={{ flex: gender }}
-                          >
-                            <span className="text-[10px] font-bold uppercase text-accent">
-                              Мужчины
-                            </span>
-                            <span className="font-mono font-medium">{gender}%</span>
-                          </div>
-                          <div
-                            className="flex flex-col items-center justify-center bg-card transition-all"
-                            style={{ flex: 100 - gender }}
-                          >
-                            <span className="text-[10px] font-bold uppercase text-muted">
-                              Женщины
-                            </span>
-                            <span className="font-mono font-medium">{100 - gender}%</span>
-                          </div>
-                        </div>
-                        <input
-                          type="range"
-                          min={10}
-                          max={90}
-                          step={5}
+                        <SplitSlider
                           value={gender}
-                          onChange={(e) => setGender(Number(e.target.value))}
-                          className="w-full accent-accent"
-                          aria-label="Соотношение по полу"
+                          onChange={setGender}
+                          leftLabel="Мужчины"
+                          rightLabel="Женщины"
                         />
                       </div>
 
-                      <div className="space-y-4">
-                        <div className="flex items-end justify-between">
+                      <div>
+                        <div className="mb-4 flex items-end justify-between">
                           <label className="text-sm font-semibold">Возраст</label>
                           <button
                             onClick={() => setAge(50)}
@@ -342,34 +318,15 @@ function Index() {
                             Сбросить
                           </button>
                         </div>
-                        <div className="flex h-12 w-full overflow-hidden rounded-xl ring-1 ring-border">
-                          <div
-                            className="flex flex-col items-center justify-center border-r border-border bg-accent/10 transition-all"
-                            style={{ flex: age }}
-                          >
-                            <span className="text-[9px] font-bold text-accent">18-34</span>
-                            <span className="font-mono text-xs">{age}%</span>
-                          </div>
-                          <div
-                            className="flex flex-col items-center justify-center bg-card transition-all"
-                            style={{ flex: 100 - age }}
-                          >
-                            <span className="text-[9px] font-bold text-muted">35-64</span>
-                            <span className="font-mono text-xs">{100 - age}%</span>
-                          </div>
-                        </div>
-                        <input
-                          type="range"
-                          min={10}
-                          max={90}
-                          step={5}
+                        <SplitSlider
                           value={age}
-                          onChange={(e) => setAge(Number(e.target.value))}
-                          className="w-full accent-accent"
-                          aria-label="Соотношение по возрасту"
+                          onChange={setAge}
+                          leftLabel="18-34"
+                          rightLabel="35-64"
                         />
                       </div>
                     </div>
+
                   </div>
                 </section>
 
