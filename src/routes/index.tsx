@@ -70,13 +70,21 @@ function SplitSlider({
     const onMove = (e: MouseEvent) => {
       if (!draggingRef.current) return;
       e.preventDefault();
-      console.log("mousemove", e.clientX, "dragging", draggingRef.current);
       updateFromClientX(e.clientX);
     };
     const onUp = () => {
-      console.log("mouseup");
       draggingRef.current = false;
     };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("mouseleave", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("mouseleave", onUp);
+    };
+  }, [value, min, max, step, onChange]);
+
 
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
