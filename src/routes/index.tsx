@@ -89,8 +89,12 @@ function SplitSlider({
     <div className="space-y-4">
       <div
         ref={trackRef}
-        className="relative flex h-14 w-full cursor-pointer overflow-hidden rounded-xl ring-1 ring-border select-none"
-        onMouseDown={(e) => startDrag(e.clientX)}
+        className="relative flex h-14 w-full cursor-ew-resize overflow-hidden rounded-xl ring-1 ring-border select-none"
+        onMouseDown={(e) => {
+          console.log("mousedown", e.clientX);
+          startDrag(e.clientX);
+        }}
+
         onTouchStart={(e) => {
           const touch = e.touches[0];
           if (touch) startDrag(touch.clientX);
