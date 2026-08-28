@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,6 +27,118 @@ export const Route = createFileRoute("/")({
 const GEOS = ["Вся Россия", "Города 1млн+", "Москва и МО"];
 const FREQ = ["Минимум 1 раз в месяц", "Минимум 1 раз в неделю", "Раз в полгода"];
 const TABS = ["Параметры опроса", "Продукт и конкуренты", "Дополнительно"];
+
+function SplitSlider({
+  value,
+  onChange,
+  min = 10,
+  max = 90,
+  step = 5,
+  leftLabel,
+  rightLabel,
+  leftSublabel,
+  rightSublabel,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  leftLabel: string;
+  rightLabel: string;
+  leftSublabel?: string;
+  rightSublabel?: string;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const draggingRef = useRef(false);
+
+  const updateFromClientX = (clientX: number) => {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const raw = ((clientX - rect.left) / rect.width) * 100;
+    const clamped = Math.min(Math.max(raw, min), max);
+    const stepped = Math.round(clamped / step) * step;
+    if (stepped !== value) onChange(stepped);
+  };
+
+  const startDrag = (clientX: number) => {
+    draggingRef.current = true;
+    updateFromClientX(clientX);
+  };
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!draggingRef.current) return;
+      e.preventDefault();
+      updateFromClientX(e.clientX);
+    };
+    const onUp = () => {
+      draggingRef.current = false;
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("mouseleave", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("mouseleave", onUp);
+    };
+  }, [value, min, max, step, onChange]);
+
+  return (
+
+    <div className="space-y-4">
+      <div
+        ref={trackRef}
+        className="relative flex h-14 w-full cursor-ew-resize overflow-hidden rounded-xl ring-1 ring-border select-none"
+        onMouseDown={(e) => startDrag(e.clientX)}
+        onTouchStart={(e) => {
+          const touch = e.touches[0];
+          if (touch) startDrag(touch.clientX);
+        }}
+        onTouchMove={(e) => {
+          if (!draggingRef.current) return;
+          const touch = e.touches[0];
+          if (!touch) return;
+          e.preventDefault();
+          updateFromClientX(touch.clientX);
+        }}
+        onTouchEnd={() => {
+          draggingRef.current = false;
+        }}
+      >
+
+        <div
+          className="flex flex-col items-center justify-center border-r border-border bg-accent/10 transition-[flex] duration-150 ease-out"
+          style={{ flex: value }}
+        >
+          <span className="text-[10px] font-bold uppercase text-accent">{leftLabel}</span>
+          {leftSublabel && <span className="font-mono text-xs">{leftSublabel}</span>}
+        </div>
+        <div
+          className="flex flex-col items-center justify-center bg-card transition-[flex] duration-150 ease-out"
+          style={{ flex: 100 - value }}
+        >
+          <span className="text-[10px] font-bold uppercase text-muted">{rightLabel}</span>
+          {rightSublabel && <span className="font-mono text-xs">{rightSublabel}</span>}
+        </div>
+
+        <div
+          className="pointer-events-none absolute top-1 bottom-1 z-10 -ml-3 w-6 rounded-full bg-card shadow-md ring-1 ring-border transition-transform"
+          style={{ left: `${value}%` }}
+        >
+          <div className="mx-auto mt-2 h-8 w-0.5 rounded-full bg-border" />
+        </div>
+      </div>
+      <div className="flex justify-between px-1 text-[11px] font-medium text-muted">
+        <span>{value}%</span>
+        <span>{100 - value}%</span>
+      </div>
+    </div>
+  );
+}
+
+
 
 function Index() {
   const [tab, setTab] = useState(0);
@@ -200,8 +313,8 @@ function Index() {
                     </div>
 
                     <div className="grid gap-12 md:grid-cols-2">
-                      <div className="space-y-4">
-                        <div className="flex items-end justify-between">
+                      <div>
+                        <div className="mb-4 flex items-end justify-between">
                           <label className="text-sm font-semibold">Пол</label>
                           <button
                             onClick={() => setGender(50)}
@@ -210,40 +323,16 @@ function Index() {
                             Сбросить
                           </button>
                         </div>
-                        <div className="flex h-12 w-full overflow-hidden rounded-xl ring-1 ring-border">
-                          <div
-                            className="flex flex-col items-center justify-center border-r border-border bg-accent/10 transition-all"
-                            style={{ flex: gender }}
-                          >
-                            <span className="text-[10px] font-bold uppercase text-accent">
-                              Мужчины
-                            </span>
-                            <span className="font-mono font-medium">{gender}%</span>
-                          </div>
-                          <div
-                            className="flex flex-col items-center justify-center bg-card transition-all"
-                            style={{ flex: 100 - gender }}
-                          >
-                            <span className="text-[10px] font-bold uppercase text-muted">
-                              Женщины
-                            </span>
-                            <span className="font-mono font-medium">{100 - gender}%</span>
-                          </div>
-                        </div>
-                        <input
-                          type="range"
-                          min={10}
-                          max={90}
-                          step={5}
+                        <SplitSlider
                           value={gender}
-                          onChange={(e) => setGender(Number(e.target.value))}
-                          className="w-full accent-accent"
-                          aria-label="Соотношение по полу"
+                          onChange={setGender}
+                          leftLabel="Мужчины"
+                          rightLabel="Женщины"
                         />
                       </div>
 
-                      <div className="space-y-4">
-                        <div className="flex items-end justify-between">
+                      <div>
+                        <div className="mb-4 flex items-end justify-between">
                           <label className="text-sm font-semibold">Возраст</label>
                           <button
                             onClick={() => setAge(50)}
@@ -252,34 +341,15 @@ function Index() {
                             Сбросить
                           </button>
                         </div>
-                        <div className="flex h-12 w-full overflow-hidden rounded-xl ring-1 ring-border">
-                          <div
-                            className="flex flex-col items-center justify-center border-r border-border bg-accent/10 transition-all"
-                            style={{ flex: age }}
-                          >
-                            <span className="text-[9px] font-bold text-accent">18-34</span>
-                            <span className="font-mono text-xs">{age}%</span>
-                          </div>
-                          <div
-                            className="flex flex-col items-center justify-center bg-card transition-all"
-                            style={{ flex: 100 - age }}
-                          >
-                            <span className="text-[9px] font-bold text-muted">35-64</span>
-                            <span className="font-mono text-xs">{100 - age}%</span>
-                          </div>
-                        </div>
-                        <input
-                          type="range"
-                          min={10}
-                          max={90}
-                          step={5}
+                        <SplitSlider
                           value={age}
-                          onChange={(e) => setAge(Number(e.target.value))}
-                          className="w-full accent-accent"
-                          aria-label="Соотношение по возрасту"
+                          onChange={setAge}
+                          leftLabel="18-34"
+                          rightLabel="35-64"
                         />
                       </div>
                     </div>
+
                   </div>
                 </section>
 
@@ -471,12 +541,14 @@ function Index() {
                   </div>
 
                   <div className="space-y-3">
-                    {[
-                      ["pack", "Тест упаковки", "Оценка дизайна и читаемости упаковки"],
-                      ["price", "Тест цены", "Восприятие ценности и готовность платить"],
-                      ["ads", "Тест рекламных материалов", "Ролики, баннеры, ключевые сообщения"],
-                      ["deep", "Глубинная аналитика", "Расширенный отчёт с сегментацией"],
-                    ].map(([key, title, desc]) => (
+                    {(
+                      [
+                        ["pack", "Тест упаковки", "Оценка дизайна и читаемости упаковки"],
+                        ["price", "Тест цены", "Восприятие ценности и готовность платить"],
+                        ["ads", "Тест рекламных материалов", "Ролики, баннеры, ключевые сообщения"],
+                        ["deep", "Глубинная аналитика", "Расширенный отчёт с сегментацией"],
+                      ] as const
+                    ).map(([key, title, desc]) => (
                       <button
                         key={key}
                         onClick={() => toggleExtra(key)}
@@ -509,6 +581,7 @@ function Index() {
                         </div>
                       </button>
                     ))}
+
                   </div>
                 </section>
 
