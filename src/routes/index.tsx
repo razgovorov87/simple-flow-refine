@@ -91,12 +91,18 @@ function SplitSlider({
         ref={trackRef}
         className="relative flex h-14 w-full cursor-pointer overflow-hidden rounded-xl ring-1 ring-border select-none"
         onMouseDown={(e) => startDrag(e.clientX)}
-        onTouchStart={(e) => startDrag(e.touches[0].clientX)}
+        onTouchStart={(e) => {
+          const touch = e.touches[0];
+          if (touch) startDrag(touch.clientX);
+        }}
         onTouchMove={(e) => {
           if (!draggingRef.current) return;
+          const touch = e.touches[0];
+          if (!touch) return;
           e.preventDefault();
-          updateFromClientX(e.touches[0].clientX);
+          updateFromClientX(touch.clientX);
         }}
+
         onTouchEnd={() => {
           draggingRef.current = false;
         }}
